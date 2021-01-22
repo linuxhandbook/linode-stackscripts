@@ -16,44 +16,58 @@
 
 
 # UDF variables
-# <UDF name="USER" label="Create a non-root user" example="Using root user directly is not recommended" />
-# <UDF name="USER_PASSWORD" label="Create a non-root user password" example="Example: mo7adL*^*3MD$QJcQYLcKLPrLx" />
+# <UDF name="USER" label="Create a non-root user" example="Using root user directly is not recommended" default=""/>
+# <UDF name="USER_PASSWORD" label="Create a non-root user password" example="Example: mo7adL*^*3MD$QJcQYLcKLPrLx" default=""/>
 # <UDF name="UPGRADE" label="Upgrade the system automatically ?" oneof="yes,no" default="yes" />
 # <UDF name="SSH_PORT" label="Set SSH server port" example="This won't be reflected in your Linode Dashboard" default="22" />
 # <UDF name="ROOT_LOCK" label="Lock the root account ?" oneof="yes,no" default="yes" />
 
+## User creation ##
+user_create() {
+    # user_create user [password]
+    [ -z "$USER_PASSWORD" ] && \
+        USER_PASSWORD=`perl -n -e 'print/root:([^:]+):\d+:[\w\W]+/?$1:""' /etc/shadow` \
+        || USER_PASSWORD=`openssl passwd -6 $USER_PASSWORD`
+    
+    useradd -mG sudo \
+        -s `realpath /bin/sh` \
+        -p $USER_PASSWORD \
+        $USER
+}
 
-useradd -mG sudo \
-    -s `realpath /bin/sh` \
-    -p `openssl passwd -6 $USER_PASSWORD` \
-    $USER
+ssh_config(){
+    # ssh_config ...
+    local sedopts="-i -E /etc/ssh/sshd_config -e 's/.*Port 22/Port $SSH_PORT/'
+                    -e 's/.*(PermitEmptyPasswords) .+/\1 no/'
+                    -e 's/.*(X11Forwarding) .+/\1 no/'
+                    -e 's/.*(ClientAliveInterval) .+/\1 300/'
+                    -e 's/.*(ClientAliveCountMax) .+/\1 2/'
+                    -e 's/.*(PubkeyAuthentication) .+/\1 yes/' "
 
-cp -r /root/.ssh /home/$USER && \
-    chown -R $USER:$USER /home/$USER/.ssh && \
-    chmod 600 /home/$USER/.ssh
+    if test -d /root/.ssh; then
+        
+        if [ -n "$USER" ]; then
+            sedopts+="-e 's/.*(PermitRootLogin) .+/\1 no/' "
+            cp -r /root/.ssh /home/$USER && \
+                chown -R $USER:$USER /home/$USER/.ssh && \
+                chmod 700 /home/$USER/.ssh
+        else
+            sedopts+="-e 's/.*(PermitRootLogin) .+/\1 yes/' "
+        fi
+        
+        sedopts+="-e 's/.*(PasswordAuthentication) .+/\1 no/' "
 
-## SSH ##
-sed -i -E -e 's/.*Port 22/Port '"$SSH_PORT"'/' \
-    -e 's/.*(PermitEmptyPasswords) .+/\1 no/' \
-    -e 's/.*(X11Forwarding) .+/\1 no/' \
-    -e 's/.*(ClientAliveInterval) .+/\1 300/' \
-    -e 's/.*(ClientAliveCountMax) .+/\1 2/' \
-            /etc/ssh/sshd_config
+    else
 
-if [ -d /root/.ssh ]; then
+        sedopts+="-e 's/.*(PasswordAuthentication) .+/\1 yes/' "
+    fi
+        
+    sed $sedopts
+    systemctl restart ssh
+}
 
-    sed -i -E -e 's/.*(PermitRootLogin) .+/\1 yes/' \
-        -e 's/.*(PasswordAuthentication) .+/\1 yes/' \
-            /etc/ssh/sshd_config
-
-else
-    sed -i -E -e 's/.*(PubkeyAuthentication) .+/\1 yes/' \
-        -e 's/.*(PermitRootLogin) .+/\1 no/' \
-        -e 's/.*(PasswordAuthentication) .+/\1 no/'
-            /etc/ssh/sshd_config
-fi
-
-systemctl restart ssh
+user_create
+ssh_config
 
 [ "$ROOT_LOCK" = "yes" ] && {
     usermod -s /bin/nologin root
