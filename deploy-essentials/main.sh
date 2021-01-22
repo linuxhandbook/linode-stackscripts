@@ -34,14 +34,24 @@ cp -r /root/.ssh /home/$USER && \
 
 ## SSH ##
 sed -i -E -e 's/.*Port 22/Port '"$SSH_PORT"'/' \
-    -e 's/.*(PermitRootLogin) .+/\1 no/' \
-    -e 's/.*(PubkeyAuthentication) .+/\1 yes/' \
-    -e 's/.*(PasswordAuthentication) .+/\1 no/' \
     -e 's/.*(PermitEmptyPasswords) .+/\1 no/' \
     -e 's/.*(X11Forwarding) .+/\1 no/' \
     -e 's/.*(ClientAliveInterval) .+/\1 300/' \
     -e 's/.*(ClientAliveCountMax) .+/\1 2/' \
             /etc/ssh/sshd_config
+
+if [ -d /root/.ssh ]; then
+
+    sed -i -E -e 's/.*(PermitRootLogin) .+/\1 yes/' \
+        -e 's/.*(PasswordAuthentication) .+/\1 yes/' \
+            /etc/ssh/sshd_config
+
+else
+    sed -i -E -e 's/.*(PubkeyAuthentication) .+/\1 yes/' \
+        -e 's/.*(PermitRootLogin) .+/\1 no/' \
+        -e 's/.*(PasswordAuthentication) .+/\1 no/'
+            /etc/ssh/sshd_config
+fi
 
 systemctl restart ssh
 
