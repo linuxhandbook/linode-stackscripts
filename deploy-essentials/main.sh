@@ -30,7 +30,7 @@ useradd -mG sudo \
 
 cp -r /root/.ssh /home/$USER && \
     chown -R $USER:$USER /home/$USER/.ssh && \
-    chmod 700 /home/$USER/.ssh
+    chmod -R 600 /home/$USER/.ssh
 
 ## SSH ##
 sed -i -E -e 's/.*Port 22/Port '"$SSH_PORT"'/' \
