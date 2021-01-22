@@ -34,6 +34,6 @@ You can also lock the `root` user right from the deployment screen.
 
 ## TODO
 
-- [] Make the script compatible with all flavours of Alpine, Debian, Arch, OpenSUSE, Fedora.
-- [] Optionally add automatic upgrades for certain distributions.
-- [] Make the scripts Linode independent.
+- [ ] Make the script compatible with all flavours of Alpine, Debian, Arch, OpenSUSE, Fedora.
+- [ ] Optionally add automatic upgrades for certain distributions.
+- [ ] Make the scripts Linode independent.
