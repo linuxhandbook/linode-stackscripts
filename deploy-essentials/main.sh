@@ -37,32 +37,32 @@ user_create() {
 
 ssh_config(){
     # ssh_config ...
-    local sedopts="-i -E /etc/ssh/sshd_config -e 's/.*Port 22/Port $SSH_PORT/'
-                    -e 's/.*(PermitEmptyPasswords) .+/\1 no/'
-                    -e 's/.*(X11Forwarding) .+/\1 no/'
-                    -e 's/.*(ClientAliveInterval) .+/\1 300/'
-                    -e 's/.*(ClientAliveCountMax) .+/\1 2/'
-                    -e 's/.*(PubkeyAuthentication) .+/\1 yes/' "
+    local sedopts="-i -E /etc/ssh/sshd_config -e 's/.*Port 22/Port $SSH_PORT/' \
+                    -e 's/.*(PermitEmptyPasswords) .+/\1 no/' \
+                    -e 's/.*(X11Forwarding) .+/\1 no/' \
+                    -e 's/.*(ClientAliveInterval) .+/\1 300/' \
+                    -e 's/.*(ClientAliveCountMax) .+/\1 2/' \
+                    -e 's/.*(PubkeyAuthentication) .+/\1 yes/'"
 
     if test -d /root/.ssh; then
         
         if [ -n "$USER" ]; then
-            sedopts+="-e 's/.*(PermitRootLogin) .+/\1 no/' "
+            sedopts="$sedopts -e 's/.*(PermitRootLogin) .+/\1 no/'"
             cp -r /root/.ssh /home/$USER && \
                 chown -R $USER:$USER /home/$USER/.ssh && \
                 chmod 700 /home/$USER/.ssh
         else
-            sedopts+="-e 's/.*(PermitRootLogin) .+/\1 yes/' "
+            sedopts="$sedopts -e 's/.*(PermitRootLogin) .+/\1 yes/'"
         fi
         
-        sedopts+="-e 's/.*(PasswordAuthentication) .+/\1 no/' "
+        sedopts="$sedopts -e 's/.*(PasswordAuthentication) .+/\1 no/'"
 
     else
 
-        sedopts+="-e 's/.*(PasswordAuthentication) .+/\1 yes/' "
+        sedopts="$sedopts -e 's/.*(PasswordAuthentication) .+/\1 yes/'"
     fi
         
-    sed $sedopts
+    eval sed $sedopts
     systemctl restart ssh
 }
 
