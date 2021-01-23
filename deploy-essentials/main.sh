@@ -22,21 +22,49 @@
 # <UDF name="SSH_PORT" label="Set SSH server port" example="This won't be reflected in your Linode Dashboard" default="22" />
 # <UDF name="ROOT_LOCK" label="Lock the root account ?" oneof="yes,no" default="yes" />
 
+logfile="/var/log/stackscript.log"
+
+error(){
+    for x in "$@"; do
+        test -n "$x" && printf "[ERROR] (`date '+%y-%m-%d %H:%M:%S'`) %s\n" "$x" >> $logfile
+    done
+}
+
+info(){
+    for x in "$@"; do
+        test -n "$x" && printf "[INFO] (`date '+%y-%m-%d %H:%M:%S'`) %s\n" "$x" >> $logfile
+    done
+}
+
+log(){
+    # log command-msg user-msg
+    local msg
+    msg="`eval $1`"
+    [ $? -ne 0 ] && \
+        error "$msg" "$2" || \
+            info "$msg" "$3"
+}
+
 ## User creation ##
 user_create() {
     # user_create user [password]
+    local ret=0
     [ -z "$USER_PASSWORD" ] && \
         USER_PASSWORD=`perl -n -e 'print/root:([^:]+):\d+:[\w\W]+/?$1:""' /etc/shadow` \
         || USER_PASSWORD=`openssl passwd -6 $USER_PASSWORD`
+    ret=$?
     
     useradd -mG sudo \
-        -s `realpath /bin/sh` \
+        -s /bin/bash \
         -p $USER_PASSWORD \
         $USER
+    ret=$((ret+$?))
+    return $ret
 }
 
 ssh_config(){
     # ssh_config ...
+    local ret
     local sedopts="-i -E /etc/ssh/sshd_config -e 's/.*Port 22/Port $SSH_PORT/' \
                     -e 's/.*(PermitEmptyPasswords) .+/\1 no/' \
                     -e 's/.*(X11Forwarding) .+/\1 no/' \
@@ -51,6 +79,7 @@ ssh_config(){
             cp -r /root/.ssh /home/$USER && \
                 chown -R $USER:$USER /home/$USER/.ssh && \
                 chmod 700 /home/$USER/.ssh
+                ret=$?
         else
             sedopts="$sedopts -e 's/.*(PermitRootLogin) .+/\1 yes/'"
         fi
@@ -63,16 +92,23 @@ ssh_config(){
     fi
         
     eval sed $sedopts
+    ret=$((ret+$?))
     systemctl restart ssh
+    ret=$((ret+$?))
+    return $ret
 }
 
-user_create
-ssh_config
+log "user_create 2>&1" \
+    "$USER creation failed." "$USER creation successful."
+log "ssh_config 2>&1" \
+    "SSH configuration failed." "SSH configuration successful."
 
 [ "$ROOT_LOCK" = "yes" ] && {
-    usermod -s /bin/nologin root
+    log "usermod -s /bin/nologin root 2>&1" \
+        "root lock failed." "root locked successfully."
 }
 
 [ "$UPGRADE" = "yes" ] && {
-    apt update && apt upgrade -y
+    log "apt update 2>&1 && apt upgrade -y 2>&1" \
+        "System upgrade failed." "System upgrade completed successfully."
 }
