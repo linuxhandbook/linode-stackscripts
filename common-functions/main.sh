@@ -81,7 +81,7 @@ function system_set_hostname {
     # Sets the system's hostname
     # $1 - The hostname to define
     local -r hostname="$1"
-    [ ! -n "$hostname" ] && {
+    [ -z "$hostname" ] && {
         printf "Hostname undefined\n"
         return 1;
     }
@@ -137,7 +137,7 @@ detect_distro() {
             return 1 ;;
     esac
 }
-function system_set_timezone {
+system_set_timezone () {
     # Sets the timezone on the Linode
     # $1 - required - timezone to set on the system
     [ -z "$1" ] && {
@@ -150,7 +150,7 @@ function system_install_package {
     # This function expands a bit on the old system_install_package() by allowing installation of a
     # list of packages, stored in an array, using a single command instead of requiring scripts
     # to call the function once for each package to be installed
-    [ ! -n "$1" ] && {
+    [ -z "$1" ] && {
         printf "system_install_package() requires the package(s) to be installed as its only argument\n"
         return 1;
     }
@@ -177,7 +177,7 @@ function system_remove_package {
     # This function expands a bit on the system_remove_package() by allowing removal of a
     # list of packages, stored in an array, using a single command instead of requiring scripts
     # to call the function once for each package removed
-    [ ! -n "$1" ] && {
+    [ -z "$1" ] && {
         printf "system_remove_package() requires the package to be removed as its only argument\n"
         return 1;
     }
@@ -225,7 +225,7 @@ function system_configure_ntp {
 function user_add_sudo {
     # $1 - required - username
     # $2 - required - password
-    [ ! -n "$1" -o ! -n "$2" ] && {
+    [ -z "$1" -o -z "$2" ] && {
         printf "No new username and/or password entered\n"
         return 1;
     }
@@ -253,7 +253,7 @@ function user_add_pubkey {
     # your input variables in "{double quotes and curly braces}", or the key may not load properly
     # $1 - Required - username
     # $2 - Required - public key
-    [ ! -n "$1" -o ! -n "$2" ] && {
+    [ -z "$1" -o -z "$2" ] && {
         printf "Must provide a username and a public key\n"
         return 1;
     }
@@ -317,15 +317,15 @@ function configure_basic_firewall {
 function add_port {
     # $1 - required - IP standard to use (IPv4 or IPv6)
     # $2  - Required - Port to open
-    [ ! -n "$1" ] && {
+    [ -z "$1" ] && {
         printf "add_port() requires the IP standard (IPv4/IPv6) as its first argument\n"
         return 1;
     }
-    [ ! -n "$2" ] && {
+    [ -z "$2" ] && {
         printf "add_port() requires the port number as its second argument\n"
         return 1;
     }
-    [ ! -n "$3" ] && {
+    [ -z "$3" ] && {
         printf "add_port() requires the protocol (TCP/UDP) as its third argument\n"
         return 1;
     }
@@ -391,7 +391,7 @@ function enable_fail2ban {
 }
 function enable_passwordless_sudo {
     # $1 - required - Username to grant passwordless sudo access to
-    [ ! -n "$1" ] && {
+    [ -z "$1" ] && {
         printf "enable_passwordless_sudo() requires the username to grant passwordless sudo access to as its only argument\n"
         return 1;
     }
@@ -456,7 +456,7 @@ function apache_install {
 function apache_tune {
     # Tunes Apache's memory to use the percentage of RAM you specify, defaulting to 40%
     # $1 - the percent of system memory to allocate towards Apache
-    if [ ! -n "$1" ];
+    if [ -z "$1" ];
         then local -r percent=40
         else local -r percent="$1"
     fi
@@ -470,7 +470,7 @@ function apache_tune {
 }
 function apache_virtualhost {
     # $1 - required - the hostname of the virtualhost to create
-    [ ! -n "$1" ] && {
+    [ -z "$1" ] && {
         printf "apache_virtualhost() requires the hostname as the first argument\n"
         return 1;
     }
@@ -511,7 +511,7 @@ function apache_virtualhost_from_rdns {
 }
 function apache_virtualhost_get_docroot {
     # $1 - required - Hostname of the virtualhost being configured
-    [ ! -n "$1" ] && {
+    [ -z "$1" ] && {
         printf "apache_virtualhost_get_docroot() requires the hostname as the first argument\n"
         return 1;
     }
@@ -533,7 +533,7 @@ function apache_virtualhost_get_docroot {
 ###########################################################
 function mysql_install {
     # $1 - the mysql root password
-    [ ! -n "$1" ] && {
+    [ -z "$1" ] && {
         printf "mysql_install() requires the root pass as its only argument\n"
         return 1;
     }
@@ -573,7 +573,7 @@ function mysql_configure {
 function mysql_tune {
     # Tunes MySQL's memory usage to utilize the percentage of memory you specify, defaulting to 40%
     # $1 - the percent of system memory to allocate towards MySQL
-    if [ ! -n "$1" ];
+    if [ -z "$1" ];
         then local -r percent=40
         else local -r percent="$1"
     fi
@@ -622,11 +622,11 @@ function mysql_tune {
 function mysql_create_database {
     # $1 - the mysql root password
     # $2 - Required - the db name to create
-    [ ! -n "$1" ] && {
+    [ -z "$1" ] && {
         printf "mysql_create_database() requires the root pass as its first argument\n"
         return 1;
     }
-    [ ! -n "$2" ] && {
+    [ -z "$2" ] && {
         printf "mysql_create_database() requires the name of the database as the second argument\n"
         return 1;
     }
@@ -637,15 +637,15 @@ function mysql_create_user {
     # $1 - required - the MySQL database's root password
     # $2 - required - the MySQL user to create
     # $3 - required - the MySQL user's password
-    [ ! -n "$1" ] && {
+    [ -z "$1" ] && {
         printf "mysql_create_user() requires the root password as its first argument\n"
         return 1;
     }
-    [ ! -n "$2" ] && {
+    [ -z "$2" ] && {
         printf "mysql_create_user() requires username as the second argument\n"
         return 1;
     }
-    [ ! -n "$3" ] && {
+    [ -z "$3" ] && {
         printf "mysql_create_user() requires a password as the third argument\n"
         return 1;
     }
@@ -656,15 +656,15 @@ function mysql_grant_user {
     # $1 - required - The MySQL database's root password
     # $2 - required - The MySQL user on whom to bestow privileges
     # $3 - required - The MySQL database's name
-    [ ! -n "$1" ] && {
+    [ -z "$1" ] && {
         printf "mysql_create_user() requires the root password as its first argument\n"
         return 1;
     }
-    [ ! -n "$2" ] && {
+    [ -z "$2" ] && {
         printf "mysql_create_user() requires username as the second argument\n"
         return 1;
     }
-    [ ! -n "$3" ] && {
+    [ -z "$3" ] && {
         printf "mysql_create_user() requires a database as the third argument\n"
         return 1;
     }
@@ -674,7 +674,7 @@ function mysql_grant_user {
 }
 function mysql_secure_install {
     # $1 - required - Root password for the MySQL database
-    [ ! -n "$1" ] && {
+    [ -z "$1" ] && {
         printf "mysql_secure_install() requires the MySQL database root password as its only argument\n"
         return 1;
     }
@@ -817,7 +817,7 @@ function restartServices {
     done
 }
 function randomString {
-    if [ ! -n "$1" ];
+    if [ -z "$1" ];
         then length=20
         else length="$1"
     fi
@@ -903,15 +903,15 @@ function secure_server {
     # $1 - The username for the limited sudo user
     # $2 - The password for the limited sudo user
     # $3 - Public Key to be used for SSH authentication
-    [ ! -n "$1" ] && {
+    [ -z "$1" ] && {
         printf "secure_server() requires the username for the limited sudo user as its first argument\n"
         return 1;
     }
-    [ ! -n "$2" ] && {
+    [ -z "$2" ] && {
         printf "secure_server() requires the password for the limited sudo user as its second argument\n"
         return 1;
     }
-    [ ! -n "$3" ] && {
+    [ -z "$3" ] && {
         printf "secure_server() requires the Public Key to be used for SSH authentication as its third argument\n"
         return 1;
     }
@@ -936,18 +936,18 @@ function lamp_stack {
     # $3 - required - MySQL database username
     # $4 - required - MySQL database user's password
     # $5 - optional - Hostname of the VirtualHost to configure
-    [ ! -n "$1" ] && {
+    [ -z "$1" ] && {
         printf "nc_lamp_stack() requires the MySQL database name as it's first argument\n"
     }
-    [ ! -n "$2" ] && {
+    [ -z "$2" ] && {
         printf "nc_lamp_stack() requires the MySQL database password as it's second argument\n"
         return 1;
     }
-    [ ! -n "$3" ] && {
+    [ -z "$3" ] && {
         printf "nc_lamp_stack() requires the MySQL database username as it's third argument\n"
         return 1;
     }
-    [ ! -n "$4"} ] && {
+    [ -z "$4"} ] && {
         printf "nc_lamp_stack() requires the MySQL database user's password as it's fourth argument\n"
         return 1;
     }
@@ -970,15 +970,15 @@ function wordpress_install {
     # $1 - required - The existing virtualhost to install into
     # $2 - required - The MySQL database root password
     # $3 - required - The Wordpress password
-    [ ! -n "$1" ] && {
+    [ -z "$1" ] && {
         printf "wordpress_install() requires the vitualhost as its first argument\n"
         return 1;
     }
-    [ ! -n "$2" ] && {
+    [ -z "$2" ] && {
         printf "wordpress_install() requires the MySQL database root password as its second argument\n"
         return 1;
     }
-    [ ! -n "$3" ] && {
+    [ -z "$3" ] && {
         printf "wordpress_install() requires the Wordpress password as its third argument\n"
         return 1;
     }
@@ -988,7 +988,7 @@ function wordpress_install {
     # Determine the Document Root for the configured VirtualHost, and produce an
     # error if it can't be determined
     vpath="$(apache_virtualhost_get_docroot "$vhost")"
-    [ ! -n "$vpath" ] && {
+    [ -z "$vpath" ] && {
         printf "Could not determine DocumentRoot for %s\n" "$vhost"
         return 1;
     }
