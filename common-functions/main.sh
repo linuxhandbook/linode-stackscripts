@@ -140,9 +140,9 @@ detect_distro() {
 function system_set_timezone {
     # Sets the timezone on the Linode
     # $1 - required - timezone to set on the system
-    [ ! -n "$1" ] && {
+    [ -z "$1" ] && {
          printf "system_set_timezone() requires the Linode's timezone as its only argument\n"
-         return 1;
+         return 1
     }
     timedatectl set-timezone "$1"
 }
