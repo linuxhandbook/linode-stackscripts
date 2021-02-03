@@ -108,7 +108,7 @@ detect_distro() {
     }
     
     local distro="`awk -F= '
-        $1 ~ /ID/ {
+        $1 ~ /^ID$/ {
             $2=gensub(/^"(.+)"/, "\\1", 1, $2);
             print $2
         }
