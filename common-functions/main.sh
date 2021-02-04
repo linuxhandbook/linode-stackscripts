@@ -33,12 +33,15 @@
 ###########################################################
 # System
 ###########################################################
-function debian_upgrade {
+debian_upgrade () {
     printf "Running initial updates - This will take a while...\n"
-    DEBIAN_FRONTEND=noninteractive apt-get -y upgrade >/dev/null
+    (
+        export DEBIAN_FRONTEND=noninteractive
+        apt-get update >/dev/null && >/dev/null apt upgrade -y
+    )
 }
-function system_update {
-    case "${detected_distro[family]}" in
+system_update () {
+    case "`detected_distro family`" in
         'debian')
             # Force IPv4 and noninteractive upgrade after script runs to prevent
             # breaking nf_conntrack
@@ -51,13 +54,13 @@ function system_update {
             # Run initial updates for RedHat-based systems, quietly
             # Also, add the 'epel-release' repository to yum
             printf "Running initial updates - This will take a while...\n"
-            yum --quiet -y update >/dev/null
-            yum --quiet -y install epel-release >/dev/null
-            yum --quiet repolist
+            dnf --quiet -y update >/dev/null
+            dnf --quiet -y install epel-release >/dev/null
+            dnf --quiet repolist
             ;;
     esac
 }
-function system_primary_ip {
+system_primary_ip () {
     local ip_address="$(ip a | awk '/inet / {print $2}')"
     echo $ip_address | cut -d' ' -f 2 | cut -d/ -f 1
 }
@@ -115,7 +118,7 @@ detect_distro() {
     ' /etc/os-release`"
 
     local version="`awk -F= '
-        $1 ~ /VERSION_ID/ {
+        $1 ~ /^VERSION_ID$/ {
             $2=gensub(/^"(.+)"/, "\\1", 1, $2);
             print $2
         }
@@ -862,15 +865,26 @@ function certbot_ssl {
 # OS Detection Stuff
 ###########################################################
 # Store detected distribution information in a globally-scoped Associative Array
-readonly dist="$(detect_distro 'distro')"
-readonly fam="$(detect_distro 'family')"
-readonly -A detected_distro="(
-    [distro]="${dist,,}" \
-    [family]="${fam,,}" \
-    [version]="$(detect_distro 'version')"
-    [version_major]="$(detect_distro 'version' | cut -d. -f1)"
-    [version_minor]="$(detect_distro 'version' | cut -d. -f2)"
-)"
+readonly distro="`detect_distro 'distro' | tr [:upper:] [:lower:]`"
+readonly family="`detect_distro 'family' | tr [:upper:] [:lower:]`"
+readonly version="`detect_dstro 'version'`"
+readonly version_major="`echo $version | cut -d. -f1`"
+readonly version_minor="`echo $version | cut -d. -f2`"
+
+detected_distro(){
+    eval echo \$$1
+}
+
+# CAN'T USE ASSOCIATIVE ARRAYS IN POSIX SH
+
+# readonly -A detected_distro="(
+#     [distro]="${dist,,}" \
+#     [family]="${fam,,}" \
+#     [version]="$(detect_distro 'version')"
+#     [version_major]="$(detect_distro 'version' | cut -d. -f1)"
+#     [version_minor]="$(detect_distro 'version' | cut -d. -f2)"
+# )"
+
 ###########################################################
 # Other functions
 ###########################################################
