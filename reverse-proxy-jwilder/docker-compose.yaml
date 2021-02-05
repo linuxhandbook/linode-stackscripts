@@ -1,0 +1,43 @@
+version: "3.7"
+
+services:
+
+  reverse_proxy:
+    image: "jwilder/nginx-proxy"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "html:/usr/share/nginx/html"
+      - "dhparam:/etc/nginx/dhparam"
+      - "vhost:/etc/nginx/vhost.d"
+      - "certs:/etc/nginx/certs:ro"
+      - "/var/run/docker.sock:/tmp/docker.sock:ro"
+      - "./max_upload_size.conf:/etc/nginx/conf.d/max_upload_size.conf"
+    labels:
+      - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"
+    restart: "on-failure"
+    networks: ["net"]
+
+  letsencrypt:
+    image: "jrcs/letsencrypt-nginx-proxy-companion"
+    depends_on: ["reverse_proxy"]
+    volumes:
+      - "acme:/etc/acme.sh"
+      - "certs:/etc/nginx/certs:rw"
+      - "vhost:/etc/nginx/vhost.d"
+      - "html:/usr/share/nginx/html"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    restart: "on-failure"
+    networks: ["net"]
+
+volumes:
+  acme:
+  certs:
+  html:
+  vhost:
+  dhparam:
+
+networks:
+  net:
+    external: true
