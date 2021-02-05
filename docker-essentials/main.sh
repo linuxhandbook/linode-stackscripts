@@ -105,14 +105,41 @@ ssh_config(){
 }
 
 install_docker(){
-    apt install apt-transport-https ca-certificates curl gnupg-agent software-properties-common -y >/dev/null || return
+    apt install \
+        apt-transport-https ca-certificates \
+        curl gnupg-agent software-properties-common -y >/dev/null || return
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - >/dev/null || return
     add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" >/dev/null || return
     apt update >/dev/null && \
-        apt install docker-ce docker-ce-cli containerd.io -y >/dev/null || return
-    
-    systemctl enable --now docker >/dev/null
+        apt install \
+            docker-ce docker-ce-cli \
+            containerd.io auditd jq docker-compose -y >/dev/null || return
+}
+
+docker_post_install(){
+
     [ "$DOCKER_GROUP" = "yes" ] && usermod -aG docker $USER
+
+    cat <EOF >> /etc/audit/rules.d/audit.rules
+-w /usr/bin/docker -p wa
+-w /var/lib/docker -p wa
+-w /etc/docker -p wa
+-w /lib/systemd/system/docker.service -p wa
+-w /lib/systemd/system/docker.socket -p wa
+-w /usr/bin/containerd -p wa
+-w /etc/docker/daemon.json -p wa
+EOF
+
+    cat <EOF > /etc/docker/daemon.json
+{
+  "icc": false,
+  "live-restore": true,
+  "no-new-privileges": true
+}
+EOF
+
+    systemctl enable --now docker >/dev/null
+    systemctl enable --now auditd >/dev/null
 }
 
 
@@ -129,3 +156,4 @@ ssh_config
 }
 
 install_docker
+docker_post_install
