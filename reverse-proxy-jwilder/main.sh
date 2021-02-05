@@ -120,7 +120,7 @@ docker_post_install(){
 
     [ "$DOCKER_GROUP" = "yes" ] && usermod -aG docker $USER
 
-    cat <EOF >> /etc/audit/rules.d/audit.rules
+    cat <<EOF >> /etc/audit/rules.d/audit.rules
 -w /usr/bin/docker -p wa
 -w /var/lib/docker -p wa
 -w /etc/docker -p wa
@@ -130,7 +130,7 @@ docker_post_install(){
 -w /etc/docker/daemon.json -p wa
 EOF
 
-    cat <EOF > /etc/docker/daemon.json
+    cat <<EOF > /etc/docker/daemon.json
 {
   "icc": false,
   "live-restore": true,
