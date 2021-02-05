@@ -156,7 +156,8 @@ jwilder_nginx_jrcs_letsencrypt(){
     [ "$USER" ] && compose_dir=/home/$USER/reverse-proxy || compose_dir=/root/reverse-proxy
 
     mv $tmpdir $compose_dir
-    (cd $compose_dir; docker-compose up -d)
+    (cd $compose_dir; docker network create net; \
+        docker-compose up -d)
     [ "$USER" ] && chown -R $USER:$USER $compose_dir
 }
 
