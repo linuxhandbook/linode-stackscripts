@@ -37,7 +37,7 @@ jwilder_nginx_jrcs_letsencrypt(){
 		ret=0
         mkdir $compose_dir -p && cd $compose_dir
         for file in docker-compose.yaml max_upload_size.conf; do
-            curl -O \
+            curl -sO \
                 https://raw.githubusercontent.com/linuxhandbook/linode-stackscripts/main/reverse-proxy-jwilder/$file
 				ret=$(($ret+$?))
         done
