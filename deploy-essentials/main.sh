@@ -26,20 +26,22 @@ logfile="/var/log/stackscript.log"
 
 error(){
     for x in "$@"; do
-        test -n "$x" && printf "[ERROR] (`date '+%y-%m-%d %H:%M:%S'`) %s\n" "$x" >> $logfile
+		test -n "$x" && \
+			printf "[ERROR] ($(date '+%y-%m-%d %H:%M:%S')) %s\n" "$x" >> $logfile
     done
 }
 
 info(){
     for x in "$@"; do
-        test -n "$x" && printf "[INFO] (`date '+%y-%m-%d %H:%M:%S'`) %s\n" "$x" >> $logfile
+		test -n "$x" && \
+			printf "[INFO] ($(date '+%y-%m-%d %H:%M:%S')) %s\n" "$x" >> $logfile
     done
 }
 
 log(){
     # log command error info
     local msg
-	msg="$(2>&1 sh -c \"$1\")"
+	msg="$(2>&1 eval \"$1\")"
     [ $? -ne 0 ] && \
         error "$msg" "$2" || \
             info "$msg" "$3"
@@ -98,6 +100,12 @@ ssh_config(){
     return $ret
 }
 
+debian_upgrade(){
+	export DEBIAN_FRONTEND="noninteractive"
+	>/dev/null 2>&1 apt update -qq && \
+		>/dev/null 2>&1 apt upgrade -qqy
+}
+
 log "user_create" \
     "$USER creation failed." "$USER creation successful."
 log "ssh_config" \
@@ -109,6 +117,6 @@ log "ssh_config" \
 }
 
 [ "$UPGRADE" = "yes" ] && {
-    log "&> /dev/null apt update && &> /dev/null apt upgrade -y" \
+    log "upgrade" \
         "System upgrade failed." "System upgrade completed successfully."
 }
