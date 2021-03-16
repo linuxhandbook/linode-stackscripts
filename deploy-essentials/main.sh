@@ -37,9 +37,9 @@ info(){
 }
 
 log(){
-    # log command-msg user-msg
+    # log command error info
     local msg
-    msg="`eval $1`"
+	msg="$(2>&1 sh -c \"$1\")"
     [ $? -ne 0 ] && \
         error "$msg" "$2" || \
             info "$msg" "$3"
@@ -50,8 +50,8 @@ user_create() {
     # user_create user [password]
     local ret=0
     [ -z "$USER_PASSWORD" ] && \
-        USER_PASSWORD=`perl -n -e 'print/root:([^:]+):\d+:[\w\W]+/?$1:""' /etc/shadow` \
-        || USER_PASSWORD=`openssl passwd -6 $USER_PASSWORD`
+		USER_PASSWORD=$(awk -F: '$1 ~ /^root$/ { print $2 }' /etc/shadow) \
+		|| USER_PASSWORD=$(openssl passwd -6 $USER_PASSWORD)
     ret=$?
     
     useradd -mG sudo \
@@ -64,7 +64,7 @@ user_create() {
 
 ssh_config(){
     # ssh_config ...
-    local ret
+    local ret=0
     local sedopts="-i -E /etc/ssh/sshd_config -e 's/.*Port 22/Port $SSH_PORT/' \
                     -e 's/.*(PermitEmptyPasswords) .+/\1 no/' \
                     -e 's/.*(X11Forwarding) .+/\1 no/' \
@@ -72,9 +72,9 @@ ssh_config(){
                     -e 's/.*(ClientAliveCountMax) .+/\1 2/' \
                     -e 's/.*(PubkeyAuthentication) .+/\1 yes/'"
 
-    if test -d /root/.ssh; then
+    if [ -d /root/.ssh ]; then
         
-        if [ -n "$USER" ]; then
+        if [ "$USER" ]; then
             sedopts="$sedopts -e 's/.*(PermitRootLogin) .+/\1 no/'"
             cp -r /root/.ssh /home/$USER && \
                 chown -R $USER:$USER /home/$USER/.ssh && \
@@ -98,17 +98,17 @@ ssh_config(){
     return $ret
 }
 
-log "user_create 2>&1" \
+log "user_create" \
     "$USER creation failed." "$USER creation successful."
-log "ssh_config 2>&1" \
+log "ssh_config" \
     "SSH configuration failed." "SSH configuration successful."
 
 [ "$ROOT_LOCK" = "yes" ] && {
-    log "usermod -s /bin/nologin root 2>&1" \
+    log "passwd -l root" \
         "root lock failed." "root locked successfully."
 }
 
 [ "$UPGRADE" = "yes" ] && {
-    log "apt update 2>&1 && apt upgrade -y 2>&1" \
+    log "&> /dev/null apt update && &> /dev/null apt upgrade -y" \
         "System upgrade failed." "System upgrade completed successfully."
 }
