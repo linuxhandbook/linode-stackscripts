@@ -24,7 +24,7 @@
 # <UDF name="DOCKER_GROUP" label="Add the non-root user to the docker group?" oneof="yes,no" default="no" />
 
 # <ssinclude StackScriptID=737400>
-. ./ssinclude-737400
+. /root/ssinclude-737400
 
 install_docker(){
 	export DEBIAN_FRONTEND="noninteractive"
