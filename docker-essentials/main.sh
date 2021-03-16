@@ -29,14 +29,14 @@
 install_docker(){
 	export DEBIAN_FRONTEND="noninteractive"
 
-    apt install \
+    >/dev/null 2>&1 apt install \
         apt-transport-https ca-certificates \
-        curl gnupg-agent software-properties-common -qqy >/dev/null || return $?
+        curl gnupg-agent software-properties-common -qqy || return $?
 
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
-		sudo apt-key add - >/dev/null || return $?
+		sudo apt-key add - >/dev/null 2>&1 || return $?
 
-    >/dev/null add-apt-repository \
+    >/dev/null 2>&1 add-apt-repository \
 		"deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
 		|| return $?
 
@@ -50,8 +50,8 @@ docker_post_install(){
 
     if [ "$DOCKER_GROUP" = "yes" ]; then
 		usermod -aG docker $USER \
-			&& error "$USER was'nt added to the docker group." \
-			|| info "$USER was successfully added to the docker group."
+			|| error "$USER wasn't added to the docker group. usermod failed." \
+			&& info "$USER was successfully added to the docker group."
 	fi		
 
     cat <<EOF >> /etc/audit/rules.d/audit.rules
@@ -74,9 +74,9 @@ EOF
 
 	local ret=0
 
-    systemctl enable docker
+    systemctl enable docker >/dev/null
 	ret=$(($ret+$?))
-    systemctl enable auditd
+    systemctl enable auditd >/dev/null
 	return $(($ret+$?))
 }
 
