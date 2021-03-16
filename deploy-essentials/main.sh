@@ -117,6 +117,6 @@ log "ssh_config" \
 }
 
 [ "$UPGRADE" = "yes" ] && {
-    log "upgrade" \
+    log "debian_upgrade" \
         "System upgrade failed." "System upgrade completed successfully."
 }
