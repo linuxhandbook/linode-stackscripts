@@ -41,7 +41,7 @@ info(){
 log(){
     # log command error info
     local msg
-	msg="$(2>&1 eval \"$1\")"
+	msg="$(2>&1 eval $1)"
     [ $? -ne 0 ] && \
         error "$msg" "$2" || \
             info "$msg" "$3"
